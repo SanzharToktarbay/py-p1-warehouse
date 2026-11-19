@@ -46,6 +46,21 @@ def remove_item(data, name, qty):
     if data["items"][item]["qty"] == 0:
         del data["item"][item]
 
+
+def report(data):
+    lines = []
+
+    for name in sorted(data["items"]):
+        qty = data["items"][name]["qty"] 
+        price = data["items"][name]["price"]
+        cost = qty * price
+
+        text = f"{name}: {qty} шт. x {price:.2f} = {cost:.2f}"
+
+        lines.append(text)
+    return lines
+
+
 # def save(data, path):
 # def load(path):
 # def report(data):
