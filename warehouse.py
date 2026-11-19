@@ -1,3 +1,6 @@
+import json
+
+
 def add_item(data, name, qty, price):
     item = name.strip().lower()
 
@@ -61,6 +64,10 @@ def report(data):
     return lines
 
 
-# def save(data, path):
+def save(data, path):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+
 # def load(path):
-# def report(data):
