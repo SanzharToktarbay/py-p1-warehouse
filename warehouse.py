@@ -28,6 +28,23 @@ def total_value(data):
     return round(total, 2)
 
 
+def remove_item(data, name, qty):
+    item = name.strip().lower()
+
+    if item not in data["items"]:
+        raise KeyError("Такого товара не существует")
+
+    if not isinstance(qty, int) or qty <= 0:
+            raise ValueError("Количество должно быть положительным числом")
+    
+    if data["items"][item]["qty"] < qty:
+        raise ValueError("Нету столько товара")
+
+    
+    data["items"][item]["qty"] -= qty
+
+    if data["items"][item]["qty"] == 0:
+        del data["item"][item]
 
 # def save(data, path):
 # def load(path):
