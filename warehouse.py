@@ -19,6 +19,14 @@ def add_item(data, name, qty, price):
             } 
 
 
+def total_value(data):
+    total = 0
+
+    for item in data["items"].values():
+        total += item["qty"] * item["price"]
+
+    return round(total, 2)
+
 
 
 # def save(data, path):
