@@ -1,4 +1,5 @@
 import json
+import argparse
 
 
 def add_item(data, name, qty, price):
@@ -47,7 +48,7 @@ def remove_item(data, name, qty):
     data["items"][item]["qty"] -= qty
 
     if data["items"][item]["qty"] == 0:
-        del data["item"][item]
+        del data["items"][item]
 
 
 def report(data):
@@ -76,3 +77,45 @@ def load(path):
             return json.load(f)
     except FileNotFoundError:
             return {"items": {}}
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Программа учета товаров на складе"
+    )
+
+    parser.add_argument("--file", default="store.json")
+
+    commands = parser.add_subparsers(dest="command", required=True)
+    p_add = commands.add_parser("add")
+    p_add.add_argument("name")
+    p_add.add_argument("qty", type=int)
+    p_add.add_argument("price", type=float)
+
+    p_remove = commands.add_parser("remove")
+    p_remove.add_argument("name")
+    p_remove.add_argument("qty", type=int)
+
+    p_list = commands.add_parser("list")
+    p_total = commands.add_parser("total")
+
+    args = parser.parse_args()
+    data = load(args.file)
+
+    if args.command == "remove":
+        remove_item(data, args.name, args.qty)
+        save(data, args.file)
+
+    elif args.command == "add":
+        add_item(data, args.name, args.qty, args.price)
+        save(data, args.file)
+
+    elif args.command == "list":
+        for line in report(data):
+            print(line)
+    elif args.command == "total":
+        total = total_value(data)
+        print(f"Стоимость склада: {total:.2f}")
+
+if __name__ == "__main__":
+    main()
