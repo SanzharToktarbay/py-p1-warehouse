@@ -89,6 +89,75 @@ def load(path):
             return {"items": {}}
 
 
+def run_menu(data, path):
+    while True:
+        print("\n========== СКЛАД МАГАЗИНА ==========")
+        print("1. Добавить товар")
+        print("2. Списать товар")
+        print("3. Посмотреть остатки")
+        print("4. Общая стоимость склада")
+        print("5. Выход")
+
+        choice = input("\nВыберите действие: ").strip()
+
+        try:
+            if choice == "1":
+                name = input("Название товара: ")
+                qty = int(input("Количество: "))
+                price = float(input("Цена: "))
+
+                add_item(data, name, qty, price)
+                save(data, path)
+
+                item = name.strip().lower()
+                print(
+                    f"Добавлено: {item} — {qty} шт. "
+                    f"по {price:.2f}"
+                )
+
+            elif choice == "2":
+                name = input("Название товара: ")
+                qty = int(input("Количество для списания: "))
+
+                remove_item(data, name, qty)
+                save(data, path)
+
+                item = name.strip().lower()
+                remaining = data["items"].get(
+                    item, {}
+                ).get("qty", 0)
+
+                print(
+                    f"Списано: {item} — {qty} шт. "
+                    f"Осталось: {remaining}"
+                )
+
+            elif choice == "3":
+                lines = report(data)
+
+                if not lines:
+                    print("Склад пуст.")
+                else:
+                    for line in lines:
+                        print(line)
+
+            elif choice == "4":
+                total = total_value(data)
+                print(f"Стоимость склада: {total:.2f}")
+
+            elif choice == "5":
+                print("До свидания!")
+                break
+
+            else:
+                print("Ошибка: неизвестный пункт меню")
+
+
+        except (ValueError, KeyError, OSError) as error:
+            message = error.args[0] if error.args else str(error)
+            print(f"Ошибка: {message}")
+
+
 def main():
     try:
         parser = WarehouseParser(
@@ -112,6 +181,7 @@ def main():
 
         commands.add_parser("list")
         commands.add_parser("total")
+        commands.add_parser("menu")
 
         args = parser.parse_args()
         data = load(args.file)
@@ -149,6 +219,9 @@ def main():
         elif args.command == "total":
             total = total_value(data)
             print(f"Стоимость склада: {total:.2f}")
+
+        elif args.command == "menu":
+            run_menu(data, args.file)
 
     except (ValueError, KeyError, OSError) as error:
         message = error.args[0] if error.args else str(error)

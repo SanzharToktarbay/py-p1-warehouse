@@ -1,0 +1,16 @@
+{
+  "items": {
+    "shampoo": {
+      "qty": 10,
+      "price": 2000.0
+    },
+    "bread": {
+      "qty": 100,
+      "price": 150.0
+    },
+    "lays": {
+      "qty": 10,
+      "price": 1200.0
+    }
+  }
+}
