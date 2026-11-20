@@ -1,5 +1,11 @@
 import json
 import argparse
+import sys
+
+
+class WarehouseParser(argparse.ArgumentParser):
+    def error(self, message):
+        raise ValueError(message)
 
 
 def add_item(data, name, qty, price):
@@ -11,8 +17,9 @@ def add_item(data, name, qty, price):
     if not isinstance(qty, int) or qty <= 0:
         raise ValueError("Количество должно быть положительным числом")
 
-    if price < 0:
-        raise ValueError("Цена не может быть отрицательным")
+    if type(price) not in (int, float) or price < 0:
+        raise ValueError("Цена должна быть неотрицательным числом")
+    
     if item in data["items"]:
         data["items"][item]["qty"] += qty
         data["items"][item]["price"] = price
@@ -42,7 +49,10 @@ def remove_item(data, name, qty):
             raise ValueError("Количество должно быть положительным числом")
     
     if data["items"][item]["qty"] < qty:
-        raise ValueError("Нету столько товара")
+        available = data["items"][item]["qty"]
+        raise ValueError(
+        f"на складе только {available} шт. товара «{item}»"
+    )
 
     
     data["items"][item]["qty"] -= qty
@@ -80,42 +90,75 @@ def load(path):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Программа учета товаров на складе"
-    )
+    try:
+        parser = WarehouseParser(
+            description="Программа учета товаров на складе"
+        )
 
-    parser.add_argument("--file", default="store.json")
+        parser.add_argument("--file", default="store.json")
 
-    commands = parser.add_subparsers(dest="command", required=True)
-    p_add = commands.add_parser("add")
-    p_add.add_argument("name")
-    p_add.add_argument("qty", type=int)
-    p_add.add_argument("price", type=float)
+        commands = parser.add_subparsers(
+            dest="command", required=True
+        )
 
-    p_remove = commands.add_parser("remove")
-    p_remove.add_argument("name")
-    p_remove.add_argument("qty", type=int)
+        p_add = commands.add_parser("add")
+        p_add.add_argument("name")
+        p_add.add_argument("qty", type=int)
+        p_add.add_argument("price", type=float)
 
-    p_list = commands.add_parser("list")
-    p_total = commands.add_parser("total")
+        p_remove = commands.add_parser("remove")
+        p_remove.add_argument("name")
+        p_remove.add_argument("qty", type=int)
 
-    args = parser.parse_args()
-    data = load(args.file)
+        commands.add_parser("list")
+        commands.add_parser("total")
 
-    if args.command == "remove":
-        remove_item(data, args.name, args.qty)
-        save(data, args.file)
+        args = parser.parse_args()
+        data = load(args.file)
 
-    elif args.command == "add":
-        add_item(data, args.name, args.qty, args.price)
-        save(data, args.file)
+        if args.command == "add":
+            add_item(data, args.name, args.qty, args.price)
+            save(data, args.file)
 
-    elif args.command == "list":
-        for line in report(data):
-            print(line)
-    elif args.command == "total":
-        total = total_value(data)
-        print(f"Стоимость склада: {total:.2f}")
+            name = args.name.strip().lower()
+
+            print(
+                f"Добавлено: {name} — {args.qty} шт. "
+                f"по {args.price:.2f}"
+            )
+
+        elif args.command == "remove":
+            name = args.name.strip().lower()
+
+            remove_item(data, args.name, args.qty)
+            save(data, args.file)
+
+            remaining = data["items"].get(
+                name, {}
+            ).get("qty", 0)
+
+            print(
+                f"Списано: {name} — {args.qty} шт. "
+                f"Осталось: {remaining}"
+            )
+
+        elif args.command == "list":
+            for line in report(data):
+                print(line)
+
+        elif args.command == "total":
+            total = total_value(data)
+            print(f"Стоимость склада: {total:.2f}")
+
+    except (ValueError, KeyError, OSError) as error:
+        message = error.args[0] if error.args else str(error)
+        print(f"Ошибка: {message}", file=sys.stderr)
+        return 1
+
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
+
+
